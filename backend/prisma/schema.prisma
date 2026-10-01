@@ -1,0 +1,644 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  password      String
+  firstName     String    @map("first_name")
+  lastName      String    @map("last_name")
+  phone         String?
+  role          String    @default("staff") // super_admin, admin, staff
+  isActive      Boolean   @default(true) @map("is_active")
+  avatar        String?
+  lastLoginAt   DateTime? @map("last_login_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model AcademySetting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String?  @db.Text
+  group     String   @default("general")
+  type      String   @default("text") // text, textarea, number, boolean, json, image
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([key])
+  @@index([group])
+  @@map("academy_settings")
+}
+
+model HeroSlide {
+  id          Int      @id @default(autoincrement())
+  title       String?
+  subtitle    String?  @db.Text
+  image       String
+  ctaText     String?  @map("cta_text")
+  ctaLink     String?  @map("cta_link")
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("hero_slides")
+}
+
+model CoachingProgram {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?  @db.Text
+  image       String?
+  ageGroup    String?  @map("age_group")
+  skillLevel  String?  @map("skill_level")
+  feeDisplay  String?  @map("fee_display")
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("coaching_programs")
+}
+
+model Facility {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?  @db.Text
+  image       String?
+  icon        String?
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("facilities")
+}
+
+model GalleryImage {
+  id          Int      @id @default(autoincrement())
+  title       String?
+  image       String
+  category    String?
+  caption     String?  @db.Text
+  sortOrder   Int      @default(0) @map("sort_order")
+  isPublished Boolean  @default(true) @map("is_published")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("gallery_images")
+}
+
+model Testimonial {
+  id          Int      @id @default(autoincrement())
+  name        String
+  photo       String?
+  testimonial String   @db.Text
+  rating      Int?
+  isPublished Boolean  @default(true) @map("is_published")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("testimonials")
+}
+
+model ContactEnquiry {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String
+  email     String?
+  subject   String?
+  message   String   @db.Text
+  source    String   @default("website") // website, phone, walk-in
+  status    String   @default("new") // new, contacted, closed
+  notes     String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@map("contact_enquiries")
+}
+
+model Coach {
+  id          Int      @id @default(autoincrement())
+  firstName   String   @map("first_name")
+  lastName    String   @map("last_name")
+  phone       String?
+  email       String?
+  specialization String? @db.Text
+  qualification  String? @db.Text
+  experience  String?
+  bio         String?  @db.Text
+  avatar      String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  coachingBatches CoachingBatch[]
+
+  @@map("coaches")
+}
+
+model Court {
+  id          Int      @id @default(autoincrement())
+  name        String
+  courtType   String   @default("indoor") @map("court_type") // indoor, outdoor
+  surfaceType String?  @map("surface_type")
+  location    String?
+  hourlyRate  Decimal  @default(0) @map("hourly_rate") @db.Decimal(10, 2)
+  status      String   @default("available") // available, maintenance, inactive
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  CoachingBatch     CoachingBatch[]
+  RegularBatch      RegularBatch[]
+  GuestBooking      GuestBooking[]
+  CourtSchedule     CourtSchedule[]
+
+  @@map("courts")
+}
+
+model CoachingBatch {
+  id              Int      @id @default(autoincrement())
+  name            String
+  programType     String   @map("program_type") // beginners, intermediate, advanced, etc.
+  skillLevel      String   @map("skill_level") // beginner, intermediate, advanced
+  ageGroup        String?  @map("age_group")
+  coachId         Int?     @map("coach_id")
+  courtId         Int?     @map("court_id")
+  maxCapacity     Int      @default(20) @map("max_capacity")
+  daysOfWeek      String   @map("days_of_week") // JSON: ["Monday","Wednesday","Friday"]
+  startTime       String   @map("start_time") // HH:mm
+  endTime         String   @map("end_time") // HH:mm
+  startDate       DateTime @map("start_date")
+  endDate         DateTime? @map("end_date")
+  monthlyFee      Decimal  @map("monthly_fee") @db.Decimal(10, 2)
+  registrationFee Decimal  @default(0) @map("registration_fee") @db.Decimal(10, 2)
+  description     String?  @db.Text
+  color           String   @default("#3B82F6")
+  status          String   @default("active") // active, inactive, full, completed
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  coach           Coach?           @relation(fields: [coachId], references: [id])
+  court           Court?           @relation(fields: [courtId], references: [id])
+  students        BatchStudent[]
+  attendances     Attendance[]
+
+  @@index([status])
+  @@index([coachId])
+  @@map("coaching_batches")
+}
+
+model Student {
+  id              Int      @id @default(autoincrement())
+  admissionNumber String   @unique @map("admission_number")
+  firstName       String   @map("first_name")
+  lastName        String   @map("last_name")
+  gender          String?
+  dateOfBirth     DateTime? @map("date_of_birth")
+  parentName      String?  @map("parent_name")
+  parentPhone     String?  @map("parent_phone")
+  phone           String?
+  email           String?
+  address         String?  @db.Text
+  emergencyContact String? @map("emergency_contact")
+  medicalNotes    String?  @map("medical_notes") @db.Text
+  photo           String?
+  joiningDate     DateTime @default(now()) @map("joining_date")
+  skillLevel      String   @default("beginner") @map("skill_level")
+  coachingProgram String?  @map("coaching_program")
+  monthlyFee      Decimal  @map("monthly_fee") @db.Decimal(10, 2)
+  admissionFee    Decimal  @default(0) @map("admission_fee") @db.Decimal(10, 2)
+  discount        Decimal  @default(0) @db.Decimal(10, 2)
+  feeDueDay       Int?     @map("fee_due_day")
+  status          String   @default("active") // active, inactive, suspended, graduated, left
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  batchStudents   BatchStudent[]
+  attendances     Attendance[]
+  payments        Payment[]
+  feeInvoices     FeeInvoice[]
+  subscriptions   Subscription[]
+
+  @@index([status])
+  @@index([admissionNumber])
+  @@index([parentPhone])
+  @@map("students")
+}
+
+model BatchStudent {
+  id          Int      @id @default(autoincrement())
+  batchId     Int      @map("batch_id")
+  studentId   Int      @map("student_id")
+  joiningDate DateTime @default(now()) @map("joining_date")
+  leavingDate DateTime? @map("leaving_date")
+  status      String   @default("active") // active, inactive, transferred
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  batch       CoachingBatch @relation(fields: [batchId], references: [id])
+  student     Student       @relation(fields: [studentId], references: [id])
+
+  @@unique([batchId, studentId])
+  @@map("batch_students")
+}
+
+model RegularBatch {
+  id            Int      @id @default(autoincrement())
+  name          String
+  courtId       Int?     @map("court_id")
+  daysOfWeek    String   @map("days_of_week") // JSON array
+  startTime     String   @map("start_time")
+  endTime       String   @map("end_time")
+  maxPlayers    Int      @default(8) @map("max_players")
+  monthlyPrice  Decimal  @map("monthly_price") @db.Decimal(10, 2)
+  startDate     DateTime @map("start_date")
+  status        String   @default("active") // active, inactive, full
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  court         Court?   @relation(fields: [courtId], references: [id])
+  players       RegularPlayerAssignment[]
+
+  @@map("regular_batches")
+}
+
+model RegularPlayer {
+  id                Int      @id @default(autoincrement())
+  playerId          String   @unique @map("player_id")
+  firstName         String   @map("first_name")
+  lastName          String   @map("last_name")
+  phone             String
+  whatsappNumber    String?  @map("whatsapp_number")
+  email             String?
+  address           String?  @db.Text
+  emergencyContact  String?  @map("emergency_contact")
+  joiningDate       DateTime @default(now()) @map("joining_date")
+  monthlyFee        Decimal  @map("monthly_fee") @db.Decimal(10, 2)
+  securityDeposit   Decimal  @default(0) @map("security_deposit") @db.Decimal(10, 2)
+  paymentFrequency  String   @default("monthly") @map("payment_frequency") // monthly, quarterly, yearly
+  subscriptionStart DateTime? @map("subscription_start")
+  subscriptionEnd   DateTime? @map("subscription_end")
+  nextPaymentDue    DateTime? @map("next_payment_due")
+  photo             String?
+  status            String   @default("active") // active, payment_due, overdue, expired, paused, cancelled
+  notes             String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  assignments       RegularPlayerAssignment[]
+  payments          Payment[]
+  feeInvoices       FeeInvoice[]
+  subscriptions     Subscription[]
+  attendances       Attendance[]
+
+  @@index([status])
+  @@index([phone])
+  @@map("regular_players")
+}
+
+model RegularPlayerAssignment {
+  id          Int          @id @default(autoincrement())
+  playerId    Int          @map("player_id")
+  batchId     Int          @map("batch_id")
+  joiningDate DateTime     @default(now()) @map("joining_date")
+  leavingDate DateTime?    @map("leaving_date")
+  status      String       @default("active") // active, inactive
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  player      RegularPlayer @relation(fields: [playerId], references: [id])
+  batch       RegularBatch  @relation(fields: [batchId], references: [id])
+
+  @@unique([playerId, batchId])
+  @@map("regular_player_assignments")
+}
+
+model GuestBooking {
+  id              Int      @id @default(autoincrement())
+  bookingNumber   String   @unique @map("booking_number")
+  name            String
+  phone           String
+  whatsappNumber  String?  @map("whatsapp_number")
+  email           String?
+  visitDate       DateTime @map("visit_date")
+  courtId         Int      @map("court_id")
+  startTime       String   @map("start_time")
+  endTime         String   @map("end_time")
+  numberOfPlayers Int      @default(1) @map("number_of_players")
+  amount          Decimal  @db.Decimal(10, 2)
+  paymentMethod   String   @default("cash") @map("payment_method")
+  paymentStatus   String   @default("paid") @map("payment_status") // paid, pending, partial
+  bookingStatus   String   @default("confirmed") @map("booking_status") // confirmed, cancelled, completed
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  court           Court    @relation(fields: [courtId], references: [id])
+
+  @@index([visitDate])
+  @@index([courtId])
+  @@index([bookingStatus])
+  @@map("guest_bookings")
+}
+
+model CourtSchedule {
+  id        Int      @id @default(autoincrement())
+  courtId   Int      @map("court_id")
+  dayOfWeek String   @map("day_of_week")
+  startTime String   @map("start_time")
+  endTime   String   @map("end_time")
+  type      String   // batch, regular, guest, maintenance
+  refId     Int?     @map("ref_id")
+  refType   String?  @map("ref_type")
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  court     Court          @relation(fields: [courtId], references: [id])
+
+  @@map("court_schedules")
+}
+
+model Subscription {
+  id              Int      @id @default(autoincrement())
+  studentId       Int?     @map("student_id")
+  regularPlayerId Int?     @map("regular_player_id")
+  type            String   // coaching, regular
+  startDate       DateTime @map("start_date")
+  endDate         DateTime @map("end_date")
+  amount          Decimal  @db.Decimal(10, 2)
+  discount        Decimal  @default(0) @db.Decimal(10, 2)
+  billingCycle    String   @default("monthly") @map("billing_cycle")
+  paymentStatus   String   @default("active") @map("payment_status") // active, expired, cancelled, paused
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  student         Student?        @relation(fields: [studentId], references: [id])
+  regularPlayer   RegularPlayer?  @relation(fields: [regularPlayerId], references: [id])
+
+  @@index([paymentStatus])
+  @@index([endDate])
+  @@map("subscriptions")
+}
+
+model FeeInvoice {
+  id              Int      @id @default(autoincrement())
+  invoiceNumber   String   @unique @map("invoice_number")
+  studentId       Int?     @map("student_id")
+  regularPlayerId Int?     @map("regular_player_id")
+  billingMonth    String   @map("billing_month") // YYYY-MM
+  amount          Decimal  @db.Decimal(10, 2)
+  discount        Decimal  @default(0) @db.Decimal(10, 2)
+  tax             Decimal  @default(0) @db.Decimal(10, 2)
+  totalAmount     Decimal  @map("total_amount") @db.Decimal(10, 2)
+  paidAmount      Decimal  @default(0) @map("paid_amount") @db.Decimal(10, 2)
+  dueDate         DateTime @map("due_date")
+  status          String   @default("pending") // pending, paid, partial, overdue, cancelled
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  student         Student?        @relation(fields: [studentId], references: [id])
+  regularPlayer   RegularPlayer?  @relation(fields: [regularPlayerId], references: [id])
+  payments        Payment[]
+
+  @@index([status])
+  @@index([dueDate])
+  @@index([billingMonth])
+  @@map("fee_invoices")
+}
+
+model Payment {
+  id              Int      @id @default(autoincrement())
+  receiptNumber   String   @unique @map("receipt_number")
+  studentId       Int?     @map("student_id")
+  regularPlayerId Int?     @map("regular_player_id")
+  feeInvoiceId    Int?     @map("fee_invoice_id")
+  category        String   @default("coaching_fee") // coaching_fee, regular_membership, guest_booking, tournament, product_sale, other
+  description     String?
+  amount          Decimal  @db.Decimal(10, 2)
+  discount        Decimal  @default(0) @db.Decimal(10, 2)
+  tax             Decimal  @default(0) @db.Decimal(10, 2)
+  finalAmount     Decimal  @map("final_amount") @db.Decimal(10, 2)
+  paymentDate     DateTime @default(now()) @map("payment_date")
+  dueDate         DateTime? @map("due_date")
+  paymentMethod   String   @default("cash") @map("payment_method") // cash, upi, bank_transfer, card, other
+  transactionRef  String?  @map("transaction_ref")
+  status          String   @default("paid") // paid, partial, pending, overdue, cancelled
+  collectedBy     Int?     @map("collected_by")
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  student         Student?        @relation(fields: [studentId], references: [id])
+  regularPlayer   RegularPlayer?  @relation(fields: [regularPlayerId], references: [id])
+  feeInvoice      FeeInvoice?     @relation(fields: [feeInvoiceId], references: [id])
+
+  @@index([category])
+  @@index([status])
+  @@index([paymentDate])
+  @@map("payments")
+}
+
+model Attendance {
+  id            Int      @id @default(autoincrement())
+  date          DateTime @db.Date
+  studentId     Int?     @map("student_id")
+  regularPlayerId Int?   @map("regular_player_id")
+  batchId       Int?     @map("batch_id")
+  status        String   // present, absent, late, leave, holiday, cancelled
+  notes         String?
+  markedBy      Int?     @map("marked_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  student       Student?        @relation(fields: [studentId], references: [id])
+  regularPlayer RegularPlayer?  @relation(fields: [regularPlayerId], references: [id])
+  batch         CoachingBatch?  @relation(fields: [batchId], references: [id])
+
+  @@unique([date, studentId, batchId])
+  @@unique([date, regularPlayerId])
+  @@index([date])
+  @@index([studentId])
+  @@index([regularPlayerId])
+  @@map("attendances")
+}
+
+model Product {
+  id               Int      @id @default(autoincrement())
+  name             String
+  sku              String?  @unique
+  category         String?
+  brand            String?
+  description      String?  @db.Text
+  image            String?
+  purchasePrice    Decimal  @map("purchase_price") @db.Decimal(10, 2)
+  sellingPrice     Decimal  @map("selling_price") @db.Decimal(10, 2)
+  stockQuantity    Int      @default(0) @map("stock_quantity")
+  lowStockThreshold Int     @default(5) @map("low_stock_threshold")
+  supplier         String?
+  status           String   @default("active") // active, inactive
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  saleItems        SaleItem[]
+
+  @@index([category])
+  @@index([status])
+  @@map("products")
+}
+
+model Sale {
+  id            Int      @id @default(autoincrement())
+  invoiceNumber String   @unique @map("invoice_number")
+  customerName  String?  @map("customer_name")
+  customerPhone String?  @map("customer_phone")
+  studentId     Int?     @map("student_id")
+  regularPlayerId Int?   @map("regular_player_id")
+  totalAmount   Decimal  @map("total_amount") @db.Decimal(10, 2)
+  discount      Decimal  @default(0) @db.Decimal(10, 2)
+  finalAmount   Decimal  @map("final_amount") @db.Decimal(10, 2)
+  paymentMethod String   @default("cash") @map("payment_method")
+  paymentStatus String   @default("paid") @map("payment_status") // paid, pending, partial
+  saleDate      DateTime @default(now()) @map("sale_date")
+  staffId       Int?     @map("staff_id")
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  items         SaleItem[]
+
+  @@index([saleDate])
+  @@index([paymentStatus])
+  @@map("sales")
+}
+
+model SaleItem {
+  id        Int      @id @default(autoincrement())
+  saleId    Int      @map("sale_id")
+  productId Int      @map("product_id")
+  quantity  Int
+  unitPrice Decimal  @map("unit_price") @db.Decimal(10, 2)
+  total     Decimal  @db.Decimal(10, 2)
+
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@map("sale_items")
+}
+
+model Expense {
+  id            Int      @id @default(autoincrement())
+  category      String
+  description   String
+  amount        Decimal  @db.Decimal(10, 2)
+  date          DateTime @db.Date
+  paymentMethod String   @default("cash") @map("payment_method")
+  vendor        String?
+  receipt       String?
+  addedBy       Int?     @map("added_by")
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@index([date])
+  @@map("expenses")
+}
+
+model Tournament {
+  id                  Int      @id @default(autoincrement())
+  name                String
+  poster              String?
+  description         String?  @db.Text
+  startDate           DateTime @map("start_date")
+  endDate             DateTime @map("end_date")
+  registrationDeadline DateTime? @map("registration_deadline")
+  venue               String?
+  categories          String   // JSON array
+  entryFee            Decimal  @default(0) @map("entry_fee") @db.Decimal(10, 2)
+  prizeDetails        String?  @map("prize_details") @db.Text
+  rules               String?  @db.Text
+  contactDetails      String?  @map("contact_details") @db.Text
+  registrationUrl     String?  @map("registration_url")
+  status              String   @default("draft") // draft, published, registration_open, registration_closed, completed
+  isFeatured          Boolean  @default(false) @map("is_featured")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  registrations       TournamentRegistration[]
+
+  @@index([status])
+  @@index([startDate])
+  @@map("tournaments")
+}
+
+model TournamentRegistration {
+  id            Int      @id @default(autoincrement())
+  tournamentId  Int      @map("tournament_id")
+  participantName String @map("participant_name")
+  phone         String
+  email         String?
+  category      String
+  teamName      String?  @map("team_name")
+  partnerName   String?  @map("partner_name")
+  amount        Decimal  @db.Decimal(10, 2)
+  paymentStatus String   @default("paid") @map("payment_status")
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  tournament    Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@map("tournament_registrations")
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  userId      Int?     @map("user_id")
+  type        String   // fee_due, fee_overdue, subscription_expiry, low_stock, enquiry, system
+  title       String
+  message     String   @db.Text
+  entityType  String?  @map("entity_type")
+  entityId    Int?     @map("entity_id")
+  isRead      Boolean  @default(false) @map("is_read")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int?     @map("user_id")
+  action      String   // create, update, delete
+  entityType  String   @map("entity_type")
+  entityId    Int?     @map("entity_id")
+  oldValues   String?  @map("old_values") @db.Text
+  newValues   String?  @map("new_values") @db.Text
+  ipAddress   String?  @map("ip_address")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@map("audit_logs")
+}
