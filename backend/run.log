@@ -1,7 +1,0 @@
-
-> badminton-academy-backend@1.0.0 dev
-> ts-node-dev --respawn --transpile-only src/server.ts
-
-[INFO] 19:30:45 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-[19:30:48.517] [32mINFO[39m (18444): [36mConnected to MySQL database[39m
-[19:30:48.520] [32mINFO[39m (18444): [36mServer running on port 5000 in development mode[39m
